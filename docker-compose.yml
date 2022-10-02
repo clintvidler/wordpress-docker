@@ -1,0 +1,82 @@
+version: "3.9"
+services:
+  wordpress:
+    ports:
+      - "3080:80" # http
+    image: wordpress
+    container_name: ${APP_NAME}-wordpress
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      - database
+    networks:
+      - wp
+    volumes:
+      - wordpress:/var/www/html
+      - ${WORDPRESS_LOCAL_THEMEs}:/var/www/html/wp-content/themes
+      - ${WORDPRESS_LOCAL_PLUGINS}:/var/www/html/wp-content/plugins
+      - ${WORDPRESS_UPLOADS_CONFIG}:/usr/local/etc/php/conf.d/uploads.ini
+    environment:
+      - WORDPRESS_DB_HOST=${WORDPRESS_DB_HOST}
+      - WORDPRESS_DB_NAME=${WORDPRESS_DB_NAME}
+      - WORDPRESS_DB_USER=${WORDPRESS_DB_USER}
+      - WORDPRESS_DB_PASSWORD=${WORDPRESS_DB_PASSWORD}
+      - WORDPRESS_DEBUG=0
+
+  wordpress-cli:
+    image: wordpress:cli
+    container_name: ${APP_NAME}-cli
+    env_file:
+      - .env
+    depends_on:
+      - wordpress
+      - database
+    networks:
+      - wp
+    environment:
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - wordpress:/var/www/html
+    command: tail -f /dev/null
+
+  database:
+    # default port 3306
+    image: mysql:8
+    container_name: ${APP_NAME}-database
+    restart: unless-stopped
+    env_file:
+      - .env
+    networks:
+      - wp
+    environment:
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - ${MYSQL_LOCAL_HOME}:/var/lib/mysql
+    command:
+      - "--default-authentication-plugin=mysql_native_password"
+
+  adminer:
+    image: adminer:4
+    container_name: ${APP_NAME}-adminer
+    restart: unless-stopped
+    depends_on:
+      - database
+    networks:
+      - wp
+    ports:
+      - "9000:8080"
+
+volumes:
+  wordpress: {}
+
+networks:
+  wp:
+    name: ${APP_NAME}-net
+    driver: bridge

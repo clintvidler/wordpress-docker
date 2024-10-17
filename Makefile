@@ -1,7 +1,11 @@
 up: 
-	docker-compose up -d database wordpress
+	docker-compose up -d database wordpress; make logs;
 down: 
 	docker-compose down
+rl: 
+	make down; sleep 1.0; make up; make logs;
+logs:
+	docker-compose logs -f wordpress;
 wp-cli:
 	docker-compose run --rm wordpress-cli $(cmd)
 adminer-up:

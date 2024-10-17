@@ -24,6 +24,7 @@ node_modules/
 
 # mysql files
 dbdata
+.dbdata
 
 # IDE
 .idea
